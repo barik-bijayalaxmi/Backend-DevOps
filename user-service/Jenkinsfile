@@ -2,18 +2,21 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = "us-east-1"
-        ECR_REPO = "user-service"
+        AWS_REGION     = "us-east-1"
+        AWS_ACCOUNT_ID = "054627942946"
+
+        ECR_REPO   = "user-service"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+
+        ECR_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
+
         ECS_CLUSTER = "dev_cluster"
         ECS_SERVICE = "userservice-task-service-yxzun5v5"
-        IMAGE_TAG = "${BUILD_NUMBER}"
-        AWS_ACCOUNT_ID = "054627942946"
-        ECR_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
     }
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 checkout scm
             }
@@ -21,24 +24,27 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh """
-                docker build -t ${ECR_REPO}:${IMAGE_TAG} .
-                docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:${IMAGE_TAG}
-                docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:latest
-                """
+                dir('user-service') {
+                    sh """
+                    docker build -t ${ECR_REPO}:${IMAGE_TAG} .
+                    docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:${IMAGE_TAG}
+                    docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:latest
+                    """
+                }
             }
         }
 
-        stage('Login to ECR') {
+        stage('Login to Amazon ECR') {
             steps {
                 sh """
                 aws ecr get-login-password --region ${AWS_REGION} | \
-                docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                docker login --username AWS --password-stdin \
+                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                 """
             }
         }
 
-        stage('Push to ECR') {
+        stage('Push Image to ECR') {
             steps {
                 sh """
                 docker push ${ECR_URI}:${IMAGE_TAG}
@@ -62,7 +68,7 @@ pipeline {
 
     post {
         always {
-            sh "docker image prune -f"
+            sh "docker image prune -f || true"
         }
     }
 }
