@@ -11,7 +11,7 @@ pipeline {
         ECR_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
 
         ECS_CLUSTER = "dev_cluster"
-        ECS_SERVICE = "userservice-task-service-yxzun5v5"
+        ECS_SERVICE = "userservice-task-service-z3ukfgc0"
     }
 
     stages {
