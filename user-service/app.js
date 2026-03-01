@@ -1,128 +1,88 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const bcrypt = require("bcrypt");
-const db = require("./db");
+const db = require("./db_mysql");
+ 
+console.log("DB IMPORT VALUE:", db); // 🔎 Debug line
  
 const app = express();
 const PORT = process.env.PORT || 4000;
  
-// ======================
-// Middleware
-// ======================
+// ========== CORS ==========
+app.use(cors({
+  origin: [
+    'https://frontend.theawsn.shop',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+    'http://127.0.0.1:8080',
+    'http://localhost:8080'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+ 
 app.use(express.json());
  
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "https://frontend.theawsn.shop",
-  })
-);
+// ========== DATABASE TEST ==========
+(async () => {
+  try {
+    await db.query("SELECT 1");
+    console.log("✅ MySQL Database connected");
+  } catch (err) {
+    console.error("❌ MySQL connection failed:", err.message);
+  }
+})();
  
-// ======================
-// Connect to Database
-// ======================
-db.connect();
+// ========== ROUTES ==========
  
+app.get("/users", async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT id, name, email FROM users"
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("DB ERROR:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
  
-// ======================
-// REGISTER USER
-// ======================
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
  
   if (!name || !email || !password) {
-    return res.status(400).json({ error: "All fields are required" });
+    return res.status(400).json({ error: "All fields required" });
   }
  
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
- 
-    db.pool.query(
-      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-      [name, email, hashedPassword],
-      (err, result) => {
-        if (err) {
-          console.error("Register error:", err);
-          return res.status(500).json({ error: "User already exists or DB error" });
-        }
- 
-        res.status(201).json({ message: "User registered successfully" });
-      }
+    const [existing] = await db.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email]
     );
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
+ 
+    if (existing.length > 0) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+ 
+    const [result] = await db.query(
+      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+      [name, email, password]
+    );
+ 
+    res.status(201).json({
+      message: "User registered successfully",
+      user: { id: result.insertId, name, email }
+    });
+ 
+  } catch (err) {
+    console.error("REGISTER ERROR:", err);
+    res.status(500).json({ error: "Database error" });
   }
 });
  
- 
-// ======================
-// LOGIN USER
-// ======================
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
- 
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password required" });
-  }
- 
-  db.pool.query(
-    "SELECT * FROM users WHERE email = ?",
-    [email],
-    async (err, results) => {
-      if (err) {
-        console.error("Login DB error:", err);
-        return res.status(500).json({ error: "Database error" });
-      }
- 
-      if (results.length === 0) {
-        return res.status(401).json({ error: "User not found" });
-      }
- 
-      const user = results[0];
- 
-      const match = await bcrypt.compare(password, user.password);
- 
-      if (!match) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
- 
-      res.json({
-        message: "Login successful",
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        },
-      });
-    }
-  );
-});
- 
- 
-// ======================
-// GET USERS
-// ======================
-app.get("/users", (req, res) => {
-  db.pool.query("SELECT id, name, email FROM users", (err, results) => {
-    if (err) {
-      console.error("Error fetching users:", err);
-      return res.status(500).json({ error: "Database error" });
-    }
-    res.json(results);
-  });
-});
- 
- 
-// ======================
-// HEALTH CHECK
-// ======================
-app.get("/health", (req, res) => {
-  res.status(200).send("User Service is healthy");
-});
- 
- 
-// ======================
-// START SERVER
-// ======================
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`User Service running on port ${PORT}`);
+// ========== START SERVER ==========
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
