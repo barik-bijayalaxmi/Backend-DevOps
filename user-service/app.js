@@ -10,21 +10,14 @@ const PORT = process.env.PORT || 4000;
  
 // ========== CORS ==========
 app.use(cors({
-  origin: [
-    'https://frontend.theawsn.shop',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:5500',
-    'http://localhost:5500',
-    'http://127.0.0.1:8080',
-    'http://localhost:8080'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: "https://frontend.theawsn.shop",
+  credentials: true
 }));
- 
+
+// Allow preflight requests
+app.options("*", cors());
+
 app.use(express.json());
- 
 // ========== DATABASE TEST ==========
 (async () => {
   try {
