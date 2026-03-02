@@ -25,4 +25,8 @@ const connect = async () => {
   }
 };
 
-module.exports = { pool, connect };
+// Attach connect function to pool
+pool.connect = connect;
+
+// Export ONLY pool
+module.exports = pool;
