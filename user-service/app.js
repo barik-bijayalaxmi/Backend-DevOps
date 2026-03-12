@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const db = require("./db_mysql");
+const db = require("./db");
 
 console.log("DB IMPORT VALUE:", db);
 
