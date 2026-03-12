@@ -9,9 +9,9 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // ========== CORS ==========
-app.use(cors({
+const corsOptions = {
   origin: [
-    "https://frontend.theawsn.shop", // your frontend
+    "https://frontend.theawsn.shop",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5500",
@@ -20,7 +20,10 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // VERY IMPORTANT for preflight
 
 app.use(express.json());
 
