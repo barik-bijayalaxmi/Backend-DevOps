@@ -8,21 +8,22 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // ========== CORS ==========
-const corsOptions = {
+app.use(cors({
   origin: [
-    "https://frontend.theawsn.shop",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5500",
-    "http://localhost:5500"
+    'https://frontend.theawsn.shop',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
+    'http://127.0.0.1:8080',
+    'http://localhost:8080'
   ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-};
+}));
 
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // VERY IMPORTANT for preflight
+app.options('*', cors());
 
 app.use(express.json());
 
@@ -37,8 +38,6 @@ app.use(express.json());
 })();
 
 // ========== ROUTES ==========
-
-// Get users
 app.get("/users", async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -51,7 +50,6 @@ app.get("/users", async (req, res) => {
   }
 });
 
-// Register user
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
