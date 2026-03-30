@@ -10,8 +10,11 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // ========= MIDDLEWARE =========
+
+// Parse JSON
 app.use(express.json());
 
+// CORS OPTIONS
 const corsOptions = {
   origin: [
     "https://frontend.theawsn.shop",
@@ -20,15 +23,34 @@ const corsOptions = {
     "http://127.0.0.1:5500",
     "http://localhost:5500"
   ],
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 };
 
+// Apply CORS
 app.use(cors(corsOptions));
+
+// Handle preflight requests
 app.options("*", cors(corsOptions));
 
+// Extra headers safety (fix for ALB + browser preflight)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://frontend.theawsn.shop");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  next();
+});
+
+
 // ========= DATABASE TEST =========
+
 (async () => {
   try {
     await db.query("SELECT 1");
@@ -38,7 +60,18 @@ app.options("*", cors(corsOptions));
   }
 })();
 
+
 // ========= ROUTES =========
+
+// Root route
+app.get("/", (req, res) => {
+  res.send("🚀 User Service API running");
+});
+
+// Health check
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
 
 // Get all users
 app.get("/users", async (req, res) => {
@@ -53,6 +86,7 @@ app.get("/users", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
 
 // Register user
 app.post("/register", async (req, res) => {
@@ -98,12 +132,9 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// ========= HEALTH CHECK =========
-app.get("/health", (req, res) => {
-  res.status(200).send("OK");
-});
 
 // ========= START SERVER =========
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
