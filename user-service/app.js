@@ -48,9 +48,7 @@ app.use((req, res, next) => {
   next();
 });
 
-
 // ========= DATABASE TEST =========
-
 (async () => {
   try {
     await db.query("SELECT 1");
@@ -60,7 +58,6 @@ app.use((req, res, next) => {
   }
 })();
 
-
 // ========= ROUTES =========
 
 // Root route
@@ -68,9 +65,9 @@ app.get("/", (req, res) => {
   res.send("🚀 User Service API running");
 });
 
-// Health check
+// Health check (JSON version)
 app.get("/health", (req, res) => {
-  res.status(200).send("OK");
+  res.status(200).json({ status: "OK", service: "User Service" });
 });
 
 // Get all users
@@ -87,15 +84,12 @@ app.get("/users", async (req, res) => {
   }
 });
 
-
 // Register user
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
-    return res.status(400).json({
-      error: "All fields required"
-    });
+    return res.status(400).json({ error: "All fields required" });
   }
 
   try {
@@ -105,9 +99,7 @@ app.post("/register", async (req, res) => {
     );
 
     if (existing.length > 0) {
-      return res.status(400).json({
-        error: "User already exists"
-      });
+      return res.status(400).json({ error: "User already exists" });
     }
 
     const [result] = await db.query(
@@ -117,24 +109,16 @@ app.post("/register", async (req, res) => {
 
     res.status(201).json({
       message: "User registered successfully",
-      user: {
-        id: result.insertId,
-        name,
-        email
-      }
+      user: { id: result.insertId, name, email }
     });
 
   } catch (err) {
     console.error("REGISTER ERROR:", err);
-    res.status(500).json({
-      error: "Database error"
-    });
+    res.status(500).json({ error: "Database error" });
   }
 });
 
-
 // ========= START SERVER =========
-
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
