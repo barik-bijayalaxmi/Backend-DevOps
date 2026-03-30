@@ -8,8 +8,6 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // ========== CORS ==========
-const cors = require("cors");
-
 const corsOptions = {
   origin: [
     "https://frontend.theawsn.shop",
