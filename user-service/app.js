@@ -82,6 +82,11 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// ========== HEALTH CHECK ==========
+app.get("/health", (req, res) => {
+  res.status(200).send("OK"); // ECS/ALB health check
+});
+
 // ========== START SERVER ==========
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
