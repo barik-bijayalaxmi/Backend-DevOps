@@ -1,21 +1,21 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const bcrypt = require("bcrypt");
 const db = require("./db");
-
-console.log("DB IMPORT VALUE:", db); // 🔎 Debug line
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 // ========== CORS ==========
-app.use(cors({
-  origin: [
-    'https://frontend.theawsn.shop'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+const corsOptions = {
+  origin: ["https://frontend.theawsn.shop"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Handle preflight for all routes
 
 app.use(express.json());
 
@@ -30,12 +30,9 @@ app.use(express.json());
 })();
 
 // ========== ROUTES ==========
-
 app.get("/user-service/users", async (req, res) => {
   try {
-    const [rows] = await db.query(
-      "SELECT id, name, email FROM users"
-    );
+    const [rows] = await db.query("SELECT id, name, email FROM users");
     res.json(rows);
   } catch (err) {
     console.error("DB ERROR:", err);
@@ -60,16 +57,17 @@ app.post("/user-service/register", async (req, res) => {
       return res.status(400).json({ error: "User already exists" });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const [result] = await db.query(
       "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-      [name, email, password]
+      [name, email, hashedPassword]
     );
 
     res.status(201).json({
       message: "User registered successfully",
-      user: { id: result.insertId, name, email }
+      user: { id: result.insertId, name, email },
     });
-
   } catch (err) {
     console.error("REGISTER ERROR:", err);
     res.status(500).json({ error: "Database error" });
