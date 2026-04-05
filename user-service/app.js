@@ -31,7 +31,7 @@ app.use(express.json());
 
 // ========== ROUTES ==========
 
-app.get("/users", async (req, res) => {
+app.get("/user-service/users", async (req, res) => {
   try {
     const [rows] = await db.query(
       "SELECT id, name, email FROM users"
@@ -43,7 +43,7 @@ app.get("/users", async (req, res) => {
   }
 });
 
-app.post("/register", async (req, res) => {
+app.post("/user-service/register", async (req, res) => {
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
